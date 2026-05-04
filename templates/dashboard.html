@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Real-time Data Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <style>
         :root {
             --bg: #0a2239;
@@ -254,10 +255,6 @@
             <p id="status" class="status">Loading latest results...</p>
             <div class="toolbar">
                 <button onclick="loadResults()">Refresh</button>
-                <label class="toggle">
-                    <input type="checkbox" id="autoToggle" checked />
-                    Auto refresh
-                </label>
             </div>
         </header>
 
@@ -290,19 +287,34 @@
         const resultsEl = document.getElementById("results");
         const leaderEl = document.getElementById("leader");
         const searchEl = document.getElementById("search");
-        const autoToggleEl = document.getElementById("autoToggle");
+        const socket = io();
 
         let chart;
-        let auto = true;
         let latestData = [];
-
-        autoToggleEl.addEventListener("change", (event) => {
-            auto = event.target.checked;
-        });
 
         searchEl.addEventListener("input", () => {
             renderResults(latestData);
             renderChart(latestData);
+        });
+
+        socket.on("connect", () => {
+            statusEl.textContent = "Live connection ready.";
+        });
+
+        socket.on("disconnect", () => {
+            statusEl.textContent = "Live connection lost. Reconnecting...";
+        });
+
+        socket.on("connect_error", () => {
+            statusEl.textContent = "Live connection unavailable.";
+        });
+
+        socket.on("results_updated", (data) => {
+            latestData = Array.isArray(data) ? data : [];
+            renderResults(latestData);
+            renderLeader(latestData);
+            renderChart(latestData);
+            statusEl.textContent = `Live data updated at ${new Date().toLocaleTimeString()}`;
         });
 
         resultsEl.addEventListener("click", (event) => {
@@ -492,11 +504,6 @@
         }
 
         loadResults();
-        setInterval(() => {
-            if (auto) {
-                loadResults();
-            }
-        }, 5000);
     </script>
 </body>
 </html>

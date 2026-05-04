@@ -3,8 +3,10 @@ import time
 
 import psycopg2
 from flask import Flask, jsonify, render_template, request
+from flask_socketio import SocketIO
 
 app = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 
 
 def get_db_connection():
@@ -16,6 +18,35 @@ def get_db_connection():
         port=os.getenv("POSTGRES_PORT", "5432"),
     )
     return conn
+
+
+def fetch_results():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT id, stream, votes, updated_at
+        FROM realtime_results
+        ORDER BY votes DESC, stream ASC;
+        """
+    )
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    return [
+        {
+            "id": row[0],
+            "stream": row[1],
+            "votes": row[2],
+            "updated_at": row[3].isoformat(),
+        }
+        for row in rows
+    ]
+
+
+def broadcast_results():
+    socketio.emit("results_updated", fetch_results())
 
 
 def init_database(max_retries=10, retry_delay=2):
@@ -109,29 +140,7 @@ def db_test():
 
 @app.route("/api/results", methods=["GET"])
 def get_results():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute(
-        """
-        SELECT id, stream, votes, updated_at
-        FROM realtime_results
-        ORDER BY votes DESC, stream ASC;
-        """
-    )
-    rows = cur.fetchall()
-    cur.close()
-    conn.close()
-
-    results = [
-        {
-            "id": row[0],
-            "stream": row[1],
-            "votes": row[2],
-            "updated_at": row[3].isoformat(),
-        }
-        for row in rows
-    ]
-    return jsonify(results)
+    return jsonify(fetch_results())
 
 
 @app.route("/api/results", methods=["POST"])
@@ -161,6 +170,8 @@ def upsert_result():
     conn.commit()
     cur.close()
     conn.close()
+
+    broadcast_results()
 
     return (
         jsonify(
@@ -198,10 +209,12 @@ def delete_result(result_id):
     cur.close()
     conn.close()
 
+    broadcast_results()
+
     return jsonify({"id": row[0], "stream": row[1], "deleted": True})
 
 
 if __name__ == "__main__":
     init_database()
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    socketio.run(app, host="0.0.0.0", port=port, allow_unsafe_werkzeug=True)
