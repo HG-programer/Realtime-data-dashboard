@@ -247,11 +247,11 @@
             <div class="card">
                 <h2>Live Data Feed</h2>
                 <div class="form">
-                    <input id="name" type="text" placeholder="Candidate name" />
+                    <input id="name" type="text" placeholder="Stream name" />
                     <input id="votes" type="number" min="0" placeholder="Votes" />
                     <button onclick="updateVote()">Update</button>
                 </div>
-                <input id="search" class="search" type="text" placeholder="Search candidate" />
+                <input id="search" class="search" type="text" placeholder="Search stream" />
                 <div id="leader" class="leader">Leader: waiting for data...</div>
                 <section id="results" class="grid"></section>
             </div>
@@ -297,7 +297,7 @@
             if (!query) {
                 return data;
             }
-            return data.filter((item) => item.candidate.toLowerCase().includes(query));
+            return data.filter((item) => item.stream.toLowerCase().includes(query));
         }
 
         function renderLeader(data) {
@@ -306,12 +306,12 @@
                 return;
             }
             const leader = data[0];
-            leaderEl.textContent = `Leader: ${leader.candidate} (${leader.votes} votes)`;
+            leaderEl.textContent = `Leader: ${leader.stream} (${leader.votes} votes)`;
         }
 
         function renderChart(data) {
             const filtered = filterData(data);
-            const labels = filtered.map((item) => item.candidate);
+            const labels = filtered.map((item) => item.stream);
             const votes = filtered.map((item) => item.votes);
 
             if (chart) {
@@ -372,7 +372,7 @@
                         return `
                         <article class="row">
                             <div>
-                                <div class="name">#${index + 1} ${item.candidate}</div>
+                                <div class="name">#${index + 1} ${item.stream}</div>
                                 <div class="meta">Updated: ${formatTime(item.updated_at)}</div>
                                 <div class="bar-track">
                                     <div class="bar-fill" style="--pct:${pct}%"></div>
@@ -387,11 +387,11 @@
         }
 
         async function updateVote() {
-            const candidate = document.getElementById("name").value.trim();
+            const stream = document.getElementById("name").value.trim();
             const votes = Number.parseInt(document.getElementById("votes").value, 10);
 
-            if (!candidate) {
-                statusEl.textContent = "Candidate name is required.";
+            if (!stream) {
+                statusEl.textContent = "Stream name is required.";
                 return;
             }
 
@@ -404,7 +404,7 @@
                 const response = await fetch("/api/results", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ candidate, votes }),
+                    body: JSON.stringify({ stream, votes }),
                 });
 
                 if (!response.ok) {

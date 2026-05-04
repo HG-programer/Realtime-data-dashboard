@@ -1,8 +1,20 @@
-# Real-time Data Dashboard
+## 🚀 Real-Time Data Dashboard
 
-A containerized backend dashboard built with Flask, PostgreSQL, Docker, and Docker Compose.
+A full-stack, containerized dashboard that simulates real-time data streaming and visualization.
 
-Handles real-time updates, user input, and database synchronization using containerized architecture.
+Built using:
+- Flask (Backend API)
+- PostgreSQL (Database)
+- Docker & Docker Compose (Containerization)
+- Chart.js (Data Visualization)
+
+## Architecture
+
+```text
+Browser → Flask API → PostgreSQL
+	   ↑
+	Docker
+```
 
 ## Tech Stack
 
