@@ -215,9 +215,10 @@
         }
 
         .chart-wrap {
-            min-height: 380px;
+            height: 380px;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
         #chart {
@@ -302,6 +303,17 @@
         searchEl.addEventListener("input", () => {
             renderResults(latestData);
             renderChart(latestData);
+        });
+
+        resultsEl.addEventListener("click", (event) => {
+            const button = event.target.closest("button[data-action='delete']");
+            if (!button) {
+                return;
+            }
+
+            const resultId = Number.parseInt(button.dataset.id, 10);
+            const streamName = button.dataset.stream || "this stream";
+            deleteStream(resultId, streamName);
         });
 
         function formatTime(isoString) {
@@ -395,7 +407,7 @@
                                     <div class="bar-fill" style="--pct:${pct}%"></div>
                                 </div>
                                 <div class="row-actions">
-                                    <button class="delete-btn" onclick="deleteStream(${item.id}, ${JSON.stringify(item.stream)})">Delete</button>
+                                    <button class="delete-btn" type="button" data-action="delete" data-id="${item.id}" data-stream="${item.stream.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}">Delete</button>
                                 </div>
                             </div>
                             <div class="votes">${item.votes} votes</div>
