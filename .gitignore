@@ -1,0 +1,26 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.sqlite3
+.env
+.venv/
+venv/
+.env.local
+.env.*
+.DS_Store
+.vscode/
+/node_modules/
+*.egg-info/
+*.egg
+*.sqlite
+
+# Docker
+*.tar
+
+# Python cache
+.pytest_cache/
+
+# Ignore local screenshots only if you don't want them tracked
+# screenshots/
