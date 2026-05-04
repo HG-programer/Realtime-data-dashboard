@@ -175,6 +175,32 @@ def upsert_result():
     )
 
 
+@app.route("/api/results/<int:result_id>", methods=["DELETE"])
+def delete_result(result_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        DELETE FROM realtime_results
+        WHERE id = %s
+        RETURNING id, stream;
+        """,
+        (result_id,),
+    )
+    row = cur.fetchone()
+
+    if row is None:
+        cur.close()
+        conn.close()
+        return jsonify({"error": "Result not found."}), 404
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({"id": row[0], "stream": row[1], "deleted": True})
+
+
 if __name__ == "__main__":
     init_database()
     port = int(os.environ.get("PORT", 5000))
